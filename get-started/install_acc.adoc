@@ -1,0 +1,507 @@
+---
+sidebar: sidebar 
+permalink: get-started/install_acc.html 
+keywords: astra installation, install astra control center, how to install astra control, deploy, download from netapp support 
+summary: 몇 가지 환경 요구 사항을 설명한 후 Astra Control Center를 설치하려면 번들을 다운로드하여 설명된 단계에 따라 설치합니다. 
+---
+= Astra Control Center를 설치합니다
+:hardbreaks:
+:icons: font
+:imagesdir: ../media/get-started/
+
+
+Astra Control Center를 설치하려면 다음 단계를 수행하십시오.
+
+* <<Install Astra Control Center>>
+* <<Log in to the Astra Control Center UI>>
+
+
+
+
+== Astra Control Center를 설치합니다
+
+Astra Control Center를 설치하려면 NetApp 지원 사이트에서 설치 번들을 다운로드하고 일련의 명령을 실행하여 사용자 환경에 Astra Control Center Operator 및 Astra Control Center를 설치합니다. 이 절차를 사용하여 인터넷에 연결되었거나 공기가 연결된 환경에 Astra Control Center를 설치할 수 있습니다.
+
+.무엇을 &#8217;필요로 할거야
+* link:requirements.html["설치를 시작하기 전에 Astra Control Center 구축을 위한 환경을 준비합니다"].
+* OpenShift 클러스터에서 모든 클러스터 운영자가 정상 상태인지 확인합니다('사용 가능'은 '참'임).
++
+[listing]
+----
+oc get clusteroperators
+----
+* OpenShift 클러스터에서 모든 API 서비스가 정상 상태인지 확인합니다('사용 가능'은 '참'임).
++
+[listing]
+----
+oc get apiservices
+----
+
+
+Astra Control Center 설치 프로세스는 다음을 수행합니다.
+
+* "NetApp-acc"(또는 사용자 지정 이름) 네임스페이스에 Astra 구성 요소를 설치합니다.
+* 기본 계정을 만듭니다.
+* Astra Control Center의 이 인스턴스에 대해 기본 관리 사용자 이메일 주소와 기본 1회 암호 ACC-<UUID_of_installation>(ACC-<UUID_of_installation>)를 설정합니다. 이 사용자에게는 시스템에서 소유자 역할이 할당되며 UI에 처음 로그인할 때 필요합니다.
+* 모든 Astra Control Center Pod가 실행 중인지 확인하는 데 도움이 됩니다.
+* Astra UI를 설치합니다.
+
+
+
+NOTE: Red Hat의 Podman 리포지토리를 사용하는 경우 docker 명령 대신 Podman 명령을 사용할 수 있습니다.
+
+.단계
+. 에서 Astra Control Center 번들('Astra-control-center-[version].tar.gz')을 다운로드합니다 https://mysupport.netapp.com/site/products/all/details/astra-control-center/downloads-tab["NetApp Support 사이트"^].
+. Astra Control Center 인증서 및 키의 지퍼를 에서 다운로드하십시오 https://mysupport.netapp.com/site/products/all/details/astra-control-center/downloads-tab["NetApp Support 사이트"^].
+. (선택 사항) 다음 명령을 사용하여 번들의 서명을 확인합니다.
++
+[listing]
+----
+openssl dgst -sha256 -verify astra-control-center[version].pub -signature <astra-control-center[version].sig astra-control-center[version].tar.gz
+----
+. 이미지 추출:
++
+[listing]
+----
+tar -vxzf astra-control-center-[version].tar.gz
+----
+. Astra 디렉토리로 변경합니다.
++
+[listing]
+----
+cd astra-control-center-[version]
+----
+. Astra Control Center 이미지 디렉토리의 파일을 로컬 레지스트리에 추가합니다.
++
+
+NOTE: 아래 이미지의 자동 로드에 대한 샘플 스크립트를 참조하십시오.
+
++
+.. Docker 레지스트리에 로그인합니다.
++
+[listing]
+----
+docker login [Docker_registry_path]
+----
+.. Docker에 이미지를 로드합니다.
+.. 이미지에 태그를 지정합니다.
+.. 이미지를 로컬 레지스트리에 밀어 넣습니다.
+
+
++
+[listing]
+----
+export REGISTRY=[Docker_registry_path]
+for astraImageFile in $(ls images/*.tar) ; do
+  # Load to local cache. And store the name of the loaded image trimming the 'Loaded images: '
+  astraImage=$(docker load --input ${astraImageFile} | sed 's/Loaded image: //')
+  astraImage=$(echo ${astraImage} | sed 's!localhost/!!')
+  # Tag with local image repo.
+  docker tag ${astraImage} ${REGISTRY}/${astraImage}
+  # Push to the local repo.
+  docker push ${REGISTRY}/${astraImage}
+done
+----
+. (인증 요구 사항이 있는 레지스트리 전용) 인증이 필요한 레지스트리를 사용하는 경우 다음을 수행해야 합니다.
++
+.. 'NetApp-acc-operator' 네임스페이스 생성:
++
+[listing]
+----
+kubectl create ns netapp-acc-operator
+----
++
+응답:
+
++
+[listing]
+----
+namespace/netapp-acc-operator created
+----
+.. NetApp-acc-operator 네임스페이스에 대한 암호를 생성합니다. Docker 정보를 추가하고 다음 명령을 실행합니다.
++
+[listing]
+----
+kubectl create secret docker-registry astra-registry-cred -n netapp-acc-operator --docker-server=[Docker_registry_path] --docker-username=[username] --docker-password=[token]
+----
++
+샘플 반응:
+
++
+[listing]
+----
+secret/astra-registry-cred created
+----
+.. "NetApp-acc"(또는 사용자 지정 이름) 네임스페이스를 생성합니다.
++
+[listing]
+----
+kubectl create ns [netapp-acc or custom]
+----
++
+샘플 반응:
+
++
+[listing]
+----
+namespace/netapp-acc created
+----
+.. "NetApp-acc"(또는 사용자 지정 이름) 네임스페이스에 대한 암호를 생성합니다. Docker 정보를 추가하고 다음 명령을 실행합니다.
++
+[listing]
+----
+kubectl create secret docker-registry astra-registry-cred -n [netapp-acc or custom] --docker-server=[Docker_registry_path] --docker-username=[username] --docker-password=[token]
+----
++
+응답
+
++
+[listing]
+----
+secret/astra-registry-cred created
+----
+
+
+. Astra Control Center 운영자 배포 YAML('Astra_control_center_operator_deploy.YAML')을 편집하여 현지 등록부와 비밀을 참조하십시오.
++
+[listing]
+----
+vim astra_control_center_operator_deploy.yaml
+----
++
+.. 인증이 필요한 레지스트리를 사용하는 경우 'imagePullSecrets:[]'의 기본 줄을 다음과 같이 바꿉니다.
++
+[listing]
+----
+imagePullSecrets:
+- name: astra-registry-cred
+----
+.. kuby-RBAC-Prox 이미지의 [docker_registry_path]를 이전 단계에서 이미지를 푸시한 레지스트리 경로로 변경합니다.
+.. "acc-operator-controller-manager" 이미지의 [docker_registry_path]를 이전 단계에서 이미지를 푸시한 레지스트리 경로로 변경합니다.
+
+
++
+[listing, subs="+quotes"]
+----
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    control-plane: controller-manager
+  name: acc-operator-controller-manager
+  namespace: netapp-acc-operator
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      control-plane: controller-manager
+  template:
+    metadata:
+      labels:
+        control-plane: controller-manager
+    spec:
+      containers:
+      - args:
+        - --secure-listen-address=0.0.0.0:8443
+        - --upstream=http://127.0.0.1:8080/
+        - --logtostderr=true
+        - --v=10
+        *image: [Docker_registry_path]/kube-rbac-proxy:v0.5.0*
+        name: kube-rbac-proxy
+        ports:
+        - containerPort: 8443
+          name: https
+      - args:
+        - --health-probe-bind-address=:8081
+        - --metrics-bind-address=127.0.0.1:8080
+        - --leader-elect
+        command:
+        - /manager
+        env:
+        - name: ACCOP_LOG_LEVEL
+          value: "2"
+        *image: [Docker_registry_path]/acc-operator:[version x.y.z]*
+        imagePullPolicy: IfNotPresent
+      *imagePullSecrets: []*
+----
+. Astra Control Center 사용자 정의 리소스(CR) 파일('Astra_control_center_min YAML') 편집:
++
+[listing]
+----
+vim astra_control_center_min.yaml
+----
++
+
+NOTE: 사용자 환경에 추가 사용자 정의가 필요한 경우 대체 CR로 Astra_control_center.yaML을 사용할 수 있습니다. Astra_control_center_min YAML은 기본 CR이며 대부분의 설치에 적합합니다.
+
++
+
+NOTE: CR에서 구성한 속성은 초기 Astra Control Center 배포 후에는 변경할 수 없습니다.
+
++
+.. 이전 단계에서 이미지를 푸시한 레지스트리 경로로 '[docker_registry_path]'를 변경합니다.
+.. accountName 문자열을 계정과 연결할 이름으로 변경합니다.
+.. Astra에 액세스하기 위해 브라우저에서 사용할 FQDN으로 "astraAddress" 문자열을 변경합니다. 주소에 http:// 또는 https:// 를 사용하지 마십시오. 에서 사용하기 위해 이 FQDN을 복사합니다 <<Log in to the Astra Control Center UI,나중에>>.
+.. e-메일 문자열을 기본 초기 관리자 주소로 변경합니다. 에서 사용할 이 이메일 주소를 복사합니다 <<Log in to the Astra Control Center UI,나중에>>.
+.. 인터넷 연결이 없는 사이트의 경우 AutoSupport에 등록된 사이트를 거짓으로 변경하거나 연결된 사이트의 경우 "참"으로 변경합니다.
+.. (선택 사항) 계정과 연결된 사용자의 이름 "FirstName"과 성 "LastName"을 추가합니다. UI 내에서 이 단계를 지금 또는 나중에 수행할 수 있습니다.
+.. (선택 사항) 설치에 필요한 경우 'torageClass' 값을 다른 Trident storageClass 리소스로 변경합니다.
+.. 인증이 필요한 레지스트리를 사용하지 않는 경우 '비밀' 줄을 삭제합니다.
+
+
++
+[listing, subs="+quotes"]
+----
+apiVersion: astra.netapp.io/v1
+kind: AstraControlCenter
+metadata:
+  name: astra
+spec:
+  *accountName: "Example"*
+  astraVersion: "ASTRA_VERSION"
+  *astraAddress: "astra.example.com"*
+  autoSupport:
+    *enrolled: true*
+  *email: "[admin@example.com]"*
+  *firstName: "SRE"*
+  *lastName: "Admin"*
+  imageRegistry:
+    *name: "[Docker_registry_path]"*
+    *secret: "astra-registry-cred"*
+  *storageClass: "ontap-gold"*
+----
+. Astra Control Center 운영자를 설치합니다.
++
+[listing]
+----
+kubectl apply -f astra_control_center_operator_deploy.yaml
+----
++
+샘플 반응:
+
++
+[listing]
+----
+namespace/netapp-acc-operator created
+customresourcedefinition.apiextensions.k8s.io/astracontrolcenters.astra.netapp.io created
+role.rbac.authorization.k8s.io/acc-operator-leader-election-role created
+clusterrole.rbac.authorization.k8s.io/acc-operator-manager-role created
+clusterrole.rbac.authorization.k8s.io/acc-operator-metrics-reader created
+clusterrole.rbac.authorization.k8s.io/acc-operator-proxy-role created
+rolebinding.rbac.authorization.k8s.io/acc-operator-leader-election-rolebinding created
+clusterrolebinding.rbac.authorization.k8s.io/acc-operator-manager-rolebinding created
+clusterrolebinding.rbac.authorization.k8s.io/acc-operator-proxy-rolebinding created
+configmap/acc-operator-manager-config created
+service/acc-operator-controller-manager-metrics-service created
+deployment.apps/acc-operator-controller-manager created
+----
+. 이전 단계에서 작성하지 않은 경우, "NetApp-acc"(또는 사용자 지정) 네임스페이스를 작성하십시오.
++
+[listing]
+----
+kubectl create ns [netapp-acc or custom]
+----
++
+샘플 반응:
+
++
+[listing]
+----
+namespace/netapp-acc created
+----
+. 다음 패치를 실행하여 수정합니다 link:https://docs.netapp.com/us-en/astra-control-center/release-notes/known-issues.html#Incorrect-ClusterRoleBinding-created-by-Astra-Control-Center-CRD-during-installation["클러스터 역할 바인딩"].
+. "NetApp-acc"(또는 사용자 지정) 네임스페이스에 Astra Control Center를 설치합니다.
++
+[listing]
+----
+kubectl apply -f astra_control_center_min.yaml -n [netapp-acc or custom]
+----
++
+샘플 반응:
+
++
+[listing]
+----
+astracontrolcenter.astra.netapp.io/astra created
+----
+. 모든 시스템 구성 요소가 성공적으로 설치되었는지 확인합니다.
++
+[listing]
+----
+kubectl get pods -n [netapp-acc or custom]
+----
++
+각 포드는 'Running' 상태여야 합니다. 시스템 포드를 구축하는 데 몇 분 정도 걸릴 수 있습니다.
+
++
+샘플 반응:
+
++
+[listing]
+----
+NAME                                         READY   STATUS    RESTARTS   AGE
+acc-helm-repo-5fdfff786f-gkv6z               1/1     Running   0          4m58s
+activity-649f869bf7-jn5gs                    1/1     Running   0          3m14s
+asup-79846b5fdc-s9s97                        1/1     Running   0          3m10s
+authentication-84c78f5cf4-qhx9t              1/1     Running   0          118s
+billing-9b8496787-v8rzv                      1/1     Running   0          2m54s
+bucketservice-5fb876d9d5-wkfvz               1/1     Running   0          3m26s
+cloud-extension-f9f4f59c6-dz6s6              1/1     Running   0          3m
+cloud-insights-service-5676b8c6d4-6q7lv      1/1     Running   0          2m52s
+composite-compute-7dcc9c6d6c-lxdr6           1/1     Running   0          2m50s
+composite-volume-74dbfd7577-cd42b            1/1     Running   0          3m2s
+credentials-75dbf46f9d-5qm2b                 1/1     Running   0          3m32s
+entitlement-6cf875cb48-gkvhp                 1/1     Running   0          3m12s
+features-74fd97bb46-vss2n                    1/1     Running   0          3m6s
+fluent-bit-ds-2g9jb                          1/1     Running   0          113s
+fluent-bit-ds-5tg5h                          1/1     Running   0          113s
+fluent-bit-ds-qfxb8                          1/1     Running   0          113s
+graphql-server-7769f98b86-p4qrv              1/1     Running   0          90s
+identity-566c566cd5-ntfj6                    1/1     Running   0          3m16s
+influxdb2-0                                  1/1     Running   0          4m43s
+krakend-5cb8d56978-44q66                     1/1     Running   0          93s
+license-66cbbc6f48-27kgf                     1/1     Running   0          3m4s
+login-ui-584f7fd84b-dmdrp                    1/1     Running   0          87s
+loki-0                                       1/1     Running   0          4m44s
+metrics-ingestion-service-6dcfddf45f-mhnvh   1/1     Running   0          3m8s
+monitoring-operator-78d67b4d4-nxs6v          2/2     Running   0          116s
+nats-0                                       1/1     Running   0          4m40s
+nats-1                                       1/1     Running   0          4m26s
+nats-2                                       1/1     Running   0          4m15s
+nautilus-9b664bc55-rn9t8                     1/1     Running   0          2m56s
+openapi-dc5ddfb7d-6q8vh                      1/1     Running   0          3m20s
+polaris-consul-consul-5tjs7                  1/1     Running   0          4m43s
+polaris-consul-consul-5wbnx                  1/1     Running   0          4m43s
+polaris-consul-consul-bfvl7                  1/1     Running   0          4m43s
+polaris-consul-consul-server-0               1/1     Running   0          4m43s
+polaris-consul-consul-server-1               1/1     Running   0          4m43s
+polaris-consul-consul-server-2               1/1     Running   0          4m43s
+polaris-mongodb-0                            2/2     Running   0          4m49s
+polaris-mongodb-1                            2/2     Running   0          4m22s
+polaris-mongodb-arbiter-0                    1/1     Running   0          4m49s
+polaris-ui-6648875998-75d98                  1/1     Running   0          92s
+polaris-vault-0                              1/1     Running   0          4m41s
+polaris-vault-1                              1/1     Running   0          4m41s
+polaris-vault-2                              1/1     Running   0          4m41s
+storage-backend-metrics-69546f4fc8-m7lfj     1/1     Running   0          3m22s
+storage-provider-5d46f755b-qfv89             1/1     Running   0          3m30s
+support-5dc579865c-z4pwq                     1/1     Running   0          3m18s
+telegraf-ds-4452f                            1/1     Running   0          113s
+telegraf-ds-gnqxl                            1/1     Running   0          113s
+telegraf-ds-jhw74                            1/1     Running   0          113s
+telegraf-rs-gg6m4                            1/1     Running   0          113s
+telemetry-service-6dcc875f98-zft26           1/1     Running   0          3m24s
+tenancy-7f7f77f699-q7l6w                     1/1     Running   0          3m28s
+traefik-769d846f9b-c9crt                     1/1     Running   0          83s
+traefik-769d846f9b-l9n4k                     1/1     Running   0          67s
+trident-svc-8649c8bfc5-pdj79                 1/1     Running   0          2m57s
+vault-controller-745879f98b-49c5v            1/1     Running   0          4m51s
+----
+. (선택 사항) 설치가 완료되었는지 확인하려면 다음 명령을 사용하여 "acc-operator" 로그를 볼 수 있습니다.
++
+[listing]
+----
+kubectl logs deploy/acc-operator-controller-manager -n netapp-acc-operator -c manager -f
+----
+. 모든 Pod가 실행 중인 경우 ACC Operator가 설치한 AstraControlCenter 인스턴스를 검색하여 설치 성공 여부를 확인합니다.
++
+[listing]
+----
+kubectl get acc -o yaml -n netapp-acc
+----
+. '구축' 값에 대한 응답으로 'tatus.deploymentState` 필드를 확인합니다. 배포에 실패한 경우 대신 오류 메시지가 나타납니다.
++
+
+NOTE: 다음 단계에서 uuid를 사용합니다.
+
++
+[listing, subs="+quotes"]
+----
+apiVersion: v1
+items:
+- apiVersion: astra.netapp.io/v1
+  kind: AstraControlCenter
+  metadata:
+    creationTimestamp: "2021-07-28T21:36:49Z"
+    finalizers:
+    - astracontrolcenter.netapp.io/finalizer
+   generation: 1
+    name: astra
+    namespace: netapp-acc
+    resourceVersion: "27797604"
+    selfLink: /apis/astra.netapp.io/v1/namespaces/netapp-acc/astracontrolcenters/astra
+    uid: 61cd8b65-047b-431a-ba35-510afcb845f1
+  spec:
+    accountName: Example
+    astraAddress: astra.example.com
+    astraResourcesScaler: "Off"
+    astraVersion: 21.08.52
+    autoSupport:
+      enrolled: false
+    email: admin@example.com
+    firstName: SRE
+    lastName: Admin
+    imageRegistry:
+      name: registry_name/astra
+  status:
+    certManager: deploy
+    *deploymentState: Deployed*
+    observedGeneration: 1
+    observedVersion: 21.08.52
+    postInstall: Complete
+    *uuid: c49008a5-4ef1-4c5d-a53e-830daf994116*
+kind: List
+metadata:
+  resourceVersion: ""
+  selfLink: ""
+----
+. Astra Control Center에 로그인할 때 사용할 1회 암호를 얻으려면 이전 단계의 응답에서 'Status.uuid' 값을 복사합니다. 암호는 ACC-, UUID 값( ACC-[UUID]), 이 예에서는 ACC-c49008a5-4ef1-4c5d-a53e-830daf994116) 순으로 입력된다.
+
+
+
+
+== Astra Control Center UI에 로그인합니다
+
+ACC를 설치한 후 기본 관리자의 암호를 변경하고 ACC UI 대시보드에 로그인합니다.
+
+.단계
+. 브라우저에서, Astra_control_center_min YAML'cr when의 astraAddress에 사용한 FQDN을 입력한다 <<Install Astra Control Center,ACC를 설치했습니다>>.
+. 메시지가 표시되면 자체 서명된 인증서를 수락합니다.
++
+
+NOTE: 로그인 후 사용자 지정 인증서를 만들 수 있습니다.
+
+. Astra Control Center 로그인 페이지에서 Astra_control_center_min YAML CR when에 e-mail에 사용한 값을 입력합니다 <<Install Astra Control Center,ACC를 설치했습니다>>1회 암호('ACC-[UUID]')를 입력합니다.
++
+
+NOTE: 잘못된 암호를 세 번 입력하면 15분 동안 관리자 계정이 잠깁니다.
+
+. Login * 을 선택합니다.
+. 메시지가 나타나면 암호를 변경합니다.
++
+
+NOTE: 처음 로그인하는 데 암호를 잊은 경우 다른 관리 사용자 계정이 아직 생성되지 않은 경우 NetApp 지원에 암호 복구 지원을 문의하십시오.
+
+. (선택 사항) 기존의 자체 서명된 TLS 인증서를 제거하고 로 바꿉니다 link:../get-started/add-custom-tls-certificate.html["인증 기관(CA)에서 서명한 사용자 지정 TLS 인증서"].
+
+
+
+
+== 설치 문제를 해결합니다
+
+서비스 중 '오류' 상태인 서비스가 있으면 로그를 검사할 수 있습니다. 400 ~ 500 범위의 API 응답 코드를 찾습니다. 이는 고장이 발생한 장소를 나타냅니다.
+
+.단계
+. Astra Control Center 운영자 로그를 검사하려면 다음을 입력하십시오.
++
+[listing]
+----
+kubectl logs --follow -n netapp-acc-operator $(kubectl get pods -n netapp-acc-operator -o name)  -c manager
+----
+
+
+
+
+== 다음 단계
+
+를 수행하여 배포를 완료합니다 link:setup_overview.html["설정 작업"].
