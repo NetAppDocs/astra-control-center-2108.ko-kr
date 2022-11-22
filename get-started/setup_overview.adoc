@@ -14,10 +14,10 @@ summary: Astra Control Center를 설치하고, UI에 로그인하고, 암호를 
 Astra Control Center를 설치하고, UI에 로그인하고, 암호를 변경하면 라이센스를 설정하고, 클러스터를 추가하고, 스토리지를 관리하고, 버킷을 추가할 수 있습니다.
 
 .작업
-* <<Add a license for Astra Control Center>>
-* <<Add cluster>>
-* <<Add a storage backend>>
-* <<Add a bucket>>
+*  a license for Astra Control Center
+*  cluster
+*  a storage backend
+*  a bucket
 
 
 
@@ -114,8 +114,8 @@ Astra Control에서 리소스를 관리할 수 있도록 스토리지 백엔드�
 
 다음 옵션을 사용하여 이미 검색된 스토리지 백엔드를 추가할 수 있습니다.
 
-* <<Add storage backend using Dashboard>>
-* <<Add storage backend using Backends option>>
+*  storage backend using Dashboard
+*  storage backend using Backends option
 
 
 
@@ -195,7 +195,7 @@ TIP: 버킷 이름 및 설명은 백업을 생성할 때 나중에 선택할 수
 
 NOTE: 이 옵션은 사용자가 만든 첫 번째 버킷에는 나타나지 않습니다.
 
-.. 를 추가하여 계속합니다 <<Add S3 access credentials,자격 증명 정보>>.
+.. 를 추가하여 계속합니다  S3 access credentials,자격 증명 정보.
 
 
 
