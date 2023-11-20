@@ -35,7 +35,7 @@ Astra Control Center는 ONTAP AFF 및 FAS 스토리지 백엔드를 사용합니
 
 == 를 참조하십시오
 
-* https://docs.netapp.com/us-en/astra/index.html["Astra Control Service 문서"^]
+* https://docs.netapp.com/us-en/astra-control-service/index.html["Astra Control Service 문서"^]
 * https://docs.netapp.com/us-en/astra-control-center/index.html["Astra Control Control 문서"^]
 * https://docs.netapp.com/us-en/trident/index.html["Astra Trident 문서"^]
 * https://docs.netapp.com/us-en/astra-automation-2108/index.html["Astra API를 사용합니다"^]
