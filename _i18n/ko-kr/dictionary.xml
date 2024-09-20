@@ -86,7 +86,6 @@
   <block id="90d397f2aa31c2e6d9f5dfda5d12adca" category="paragraph">Astra Control Center는 프라이빗 클라우드에서 로컬로 실행됩니다.</block>
   <block id="9b04dea5fba4d366b92ef41197eae5e2" category="paragraph">첫 번째 릴리스의 경우 Astra Control Center는 ONTAP 9.5 이상의 OpenShift Kubernetes 클러스터 및 Trident 스토리지 백엔드를 지원합니다.</block>
   <block id="51269e2584d26b04961877ec77db6da7" category="paragraph">클라우드 연결 환경에서 Astra Control Center는 Cloud Insights를 사용하여 고급 모니터링 및 원격 측정 기능을 제공합니다. Cloud Insights 연결이 없을 경우 Astra Control Center에서 제한된(7일 메트릭) 모니터링 및 원격 측정 기능을 사용할 수 있으며, 개방형 메트릭 엔드 포인트를 통해 Kubernetes 기본 모니터링 툴(예: Prometheus 및 Grafana)으로 내보낼 수 있습니다.</block>
-  <block id="1bc8163319d46bff9915aa0226885a42" category="paragraph">Astra Control Center는 AutoSupport 및 Active IQ 에코시스템에 완전히 통합되어 사용자와 NetApp 지원 팀에 문제 해결 및 사용 정보를 제공합니다.</block>
   <block id="26849905a5aa23f71bc18ee28e352604" category="paragraph">90일 평가판 라이센스를 사용하여 Astra Control Center를 사용해 볼 수 있습니다. 평가 버전은 이메일 및 커뮤니티(Slack 채널) 옵션을 통해 지원됩니다. 또한 제품 내 지원 대시보드에서 Knowledgebase 문서 및 문서에 액세스할 수 있습니다.</block>
   <block id="b4851e92b19af0c5c82447fc0937709d" category="inline-link">요구 사항</block>
   <block id="e63cc3795b9216d59b085bd3111a248d" category="paragraph">Astra Control Center를 설치하고 사용하려면 반드시 충족해야 합니다<block ref="bdde32b2c988689d803729c06660acb4" category="inline-link-rx"></block>.</block>
@@ -1420,4 +1419,5 @@
   <block id="2352c4e1f4d0024ade0869e00e6243f4" category="paragraph"><block ref="2352c4e1f4d0024ade0869e00e6243f4" category="inline-link-macro-rx"></block></block>
   <block id="931607e4df934f12f0a0d0323f739e8c" category="list-text"><block ref="46bdba95fad7359beee853f2ee144260" category="inline-link-macro-rx"></block>.</block>
   <block id="8c12e73d5653755d89cc3e42b0fa4b92" category="list-text"><block ref="8c12e73d5653755d89cc3e42b0fa4b92" category="inline-link-rx"></block></block>
+  <block id="4ffa5f8c75a25d5db0add99affd09af7" category="paragraph">Astra Control Center는 AutoSupport 및 Active IQ Digital Advisor(Digital Advisor라고도 함) 에코시스템에 완벽하게 통합되어 문제 해결 및 사용 정보를 사용자 및 NetApp 지원에 제공합니다.</block>
 </blocks>
